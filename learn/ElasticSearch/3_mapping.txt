@@ -1,0 +1,288 @@
+#### mapping dynamic:true/false/strict
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "dynamic":false,
+      "properties": {
+        "title": {
+          "type": "text"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "age": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+
+GET my_index/_mapping
+
+PUT my_index/doc/1
+{
+  "title":"hello,world",
+  "desc":"nothing here"
+}
+
+GET my_index/doc/_search
+{
+  "query":{
+    "match":{
+      "desc":"hello"
+    }
+  }
+}
+
+#### copy_to:仅用于搜索，不在_source中
+DELETE my_index
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "first_name": {
+          "type": "text",
+          "copy_to": "full_name" 
+        },
+        "last_name": {
+          "type": "text",
+          "copy_to": "full_name" 
+        },
+        "full_name": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+
+PUT my_index/doc/1
+{
+  "first_name": "John",
+  "last_name": "Smith"
+}
+
+GET my_index/_search
+{
+  "query": {
+    "match": {
+      "full_name": { 
+        "query": "John Smith",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+#### index:默认为true，设置为false不能被查询
+DELETE my_index
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "cookie": {
+          "type": "text",
+          "index": false
+        }
+      }
+    }
+  }
+}
+
+PUT my_index/doc/1
+{
+  "cookie":"name=alfred"
+}
+
+GET my_index/_search
+{
+  "query":{
+    "match": {
+      "cookie": "name"
+    }
+  }
+}
+
+#### null value
+DELETE my_index
+
+PUT my_index
+{
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "status_code": {
+          "type":       "keyword",
+          "null_value": "NULL" 
+        }
+      }
+    }
+  }
+}
+
+PUT my_index/my_type/1
+{
+  "status_code": null
+}
+
+PUT my_index/my_type/2
+{
+  "status_code": [] 
+}
+
+GET my_index/_search
+{
+  "query": {
+    "term": {
+      "status_code": "NULL" 
+    }
+  }
+}
+
+GET my_index/my_type/1
+
+####Dynamic Mapping:依靠JSON文档字段类型来识别
+PUT test_index/doc/1
+{
+  "username":"alfred",
+  "age":14,
+  "birth":"1988-10-10",
+  "year":"18",
+  "tags":["boy","fashion"],
+  "money":100.1
+}
+
+GET test_index/_mapping
+
+
+#### date
+PUT my_index
+{
+  "mappings":{
+    "my_type":{
+      "dynamic_date_formats":["MM/dd/yyyy"]
+    }
+  }
+}
+
+#### num:字符串中出现数字时不会被识别为整型
+PUT my_index
+{
+  "mappings":{
+    "my_type":{
+      "numeric_dectection":true
+    }
+  }
+}
+
+PUT my_index/my_type/1
+{
+  "my_float":"1.0",
+  "my_integer":"1"
+}
+
+
+#### advice for custom mapping
+DELETE test_index
+PUT my_product_index/doc/1
+{
+  "referrer": "-",
+  "response_code": "200",
+  "remote_ip": "171.221.139.157",
+  "method": "POST",
+  "user_name": "-",
+  "http_version": "1.1",
+  "body_sent": {
+    "bytes": "0"
+  },
+  "url": "/analyzeVideo"
+}
+
+DELETE my_product_index
+PUT my_product_index
+{
+  "mappings": {
+    "doc": {
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "body_sent": {
+          "properties": {
+            "bytes": {
+              "type": "long"
+            }
+          }
+        },
+        "url": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+
+GET my_product_index/_mapping
+
+
+#### index template
+GET _template
+
+PUT _template/test_template
+{
+  "index_patterns": ["te*", "bar*"],
+  "order":0,
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "doc": {
+      "_source": {
+        "enabled": false
+      },
+      "properties": {
+        "name": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+PUT _template/test_template2
+{
+  "index_patterns": ["test*"],
+  "order":1,
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "doc": {
+      "_source": {
+        "enabled": true
+      }
+    }
+  }
+}
+
+
+PUT foo_index
+GET foo_index/_mapping
+
+PUT bar_index
+GET bar_index/
+
+DELETE test_index
+PUT test_index
+GET test_index/
