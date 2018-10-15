@@ -1,2 +1,2 @@
 # Elastic-Stack
-Kibana|ElasticSearch|Beates|Logstash
+以ElasticSearch为主，学习ElasticStack
