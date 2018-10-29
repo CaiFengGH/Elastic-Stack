@@ -1,2 +1,3 @@
 # Elastic-Stack
-以ElasticSearch为主，学习ElasticStack
+
+- [死磕ElasticSearch专栏](https://blog.csdn.net/laoyang360/article/details/79293493)
